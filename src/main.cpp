@@ -8,6 +8,7 @@ unsigned long interval = 1000;
 
 unsigned long pumpStateCheckStart = 0;
 unsigned long pump_on_interval = 10000;
+boolean toggle = false;
 
 enum PUMP_STATE {
   unknown,
@@ -54,7 +55,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     pumpStateCheckStart = millis();
   }
 
-  if (strcmp(topic, time_interval) == 0) {
+  if (strcmp(topic, time_interval_topic) == 0) {
     pump_on_interval = atol(payload_as_char) * 1000 * 60;
     Serial.println("interval:");
     Serial.print(pump_on_interval);
@@ -77,44 +78,48 @@ void setup() {
   WiFi.begin(ssid, password);
  
   while (WiFi.status() != WL_CONNECTED) {
+    toggle = !toggle;
+    digitalWrite(D0, toggle);
     delay(500);
     Serial.println("Connecting to WiFi..");
   }
   Serial.println("Connected to the WiFi network");
- 
+  toggle = BUILTIN_LED_OFF;
+  digitalWrite(D0, toggle);
+
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
  
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
- 
     if (client.connect("ESP32Client", mqttUser, mqttPassword )) {
- 
       Serial.println("connected");  
- 
     } else {
- 
       Serial.print("failed with state ");
       Serial.print(client.state());
+      toggle = !toggle;
+      digitalWrite(D0, toggle);
       delay(2000);
- 
     }
   }
  
-  client.subscribe(topic);
-  client.subscribe(time_interval);
+  toggle = BUILTIN_LED_OFF;
+  digitalWrite(D0, toggle);
 
-  digitalWrite(D0, LOW);
+  client.subscribe(switch_topic);
+  client.subscribe(time_interval_topic);
+
+  digitalWrite(D0, BUILTIN_LED_ON);
   delay(250);
-  digitalWrite(D0, HIGH);
+  digitalWrite(D0, BUILTIN_LED_OFF);
   delay(250);
-  digitalWrite(D0, LOW);
+  digitalWrite(D0, BUILTIN_LED_ON);
   delay(250);
-  digitalWrite(D0, HIGH);
+  digitalWrite(D0, BUILTIN_LED_OFF);
   delay(250);
-  digitalWrite(D0, LOW);
+  digitalWrite(D0, BUILTIN_LED_ON);
   delay(250);
-  digitalWrite(D0, HIGH);
+  digitalWrite(D0, BUILTIN_LED_OFF);
  
 }
  
@@ -144,7 +149,7 @@ void loop() {
       digitalWrite(D0, HIGH);
       if (notofication_state == in_progress){
         client.publish(notification_topic, "finished");
-        client.publish(topic, "off");
+        client.publish(switch_topic, "off");
         notofication_state = finished;
       }        
  }
