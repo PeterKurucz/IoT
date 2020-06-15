@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <main.h>
+#include <data_types.cpp>
 
 #define DEBUG
 
@@ -11,21 +12,6 @@ unsigned long interval = 1000;
 unsigned long pumpStateCheckStart = 0;
 unsigned long pump_on_interval = 0;
 boolean toggle = false;
-
-enum PUMP_STATE {
-  unknown,
-  switched_on,
-  switched_off
-};
-
-enum PUMP_NOTIFICATION_STATE {
-  undefined,
-  received_on,
-  received_off,
-  in_progress,
-  finished,
-  failed
-};
 
 PUMP_STATE pump_state;
 PUMP_NOTIFICATION_STATE notofication_state;
@@ -37,7 +23,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   char payload_as_char[length];
   #ifdef DEBUG
     Serial.println("Message arrived in topic: " + (String)topic);
-    //Serial.println(topic);
   #endif
 
   #ifdef DEBUG
